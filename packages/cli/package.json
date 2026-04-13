@@ -1,12 +1,13 @@
 {
-  "name": "@tokscale/cli",
+  "name": "@company/tokscale-om",
   "version": "2.0.22",
   "description": "A high-performance CLI tool and visualization dashboard for tracking AI coding assistant token usage and costs across multiple platforms.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "tokscale": "./bin.js"
+    "tokscale": "./bin.js",
+    "tokscale-om": "./bin.js"
   },
   "files": [
     "bin.js",
@@ -29,14 +30,14 @@
   },
   "dependencies": {},
   "optionalDependencies": {
-    "@tokscale/cli-darwin-arm64": "2.0.22",
-    "@tokscale/cli-darwin-x64": "2.0.22",
-    "@tokscale/cli-linux-x64-gnu": "2.0.22",
-    "@tokscale/cli-linux-x64-musl": "2.0.22",
-    "@tokscale/cli-linux-arm64-gnu": "2.0.22",
-    "@tokscale/cli-linux-arm64-musl": "2.0.22",
-    "@tokscale/cli-win32-x64-msvc": "2.0.22",
-    "@tokscale/cli-win32-arm64-msvc": "2.0.22"
+    "@company/tokscale-om-darwin-arm64": "2.0.22",
+    "@company/tokscale-om-darwin-x64": "2.0.22",
+    "@company/tokscale-om-linux-x64-gnu": "2.0.22",
+    "@company/tokscale-om-linux-x64-musl": "2.0.22",
+    "@company/tokscale-om-linux-arm64-gnu": "2.0.22",
+    "@company/tokscale-om-linux-arm64-musl": "2.0.22",
+    "@company/tokscale-om-win32-x64-msvc": "2.0.22",
+    "@company/tokscale-om-win32-arm64-msvc": "2.0.22"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

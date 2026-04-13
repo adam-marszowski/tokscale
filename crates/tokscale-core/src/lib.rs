@@ -3,6 +3,7 @@
 mod aggregator;
 pub mod clients;
 mod message_cache;
+pub mod open_mercato;
 mod parser;
 pub mod pricing;
 mod provider_identity;
@@ -11,6 +12,7 @@ pub mod sessions;
 
 pub use aggregator::*;
 pub use clients::{ClientCounts, ClientDef, ClientId, PathRoot};
+pub use open_mercato::*;
 pub use parser::*;
 pub use scanner::*;
 pub use sessions::UnifiedMessage;
@@ -1922,6 +1924,30 @@ pub async fn parse_local_unified_messages(
     let (home_dir, clients) = resolve_local_parse_request(&options)?;
     let pricing = load_pricing_for_local_parse().await;
     parse_local_unified_messages_resolved(options, &home_dir, &clients, pricing.as_deref())
+}
+
+pub async fn parse_local_open_mercato_data(
+    options: LocalParseOptions,
+) -> Result<OpenMercatoLocalParseResult, String> {
+    let (home_dir, clients) = resolve_local_parse_request(&options)?;
+    let pricing = load_pricing_for_local_parse().await;
+    let messages = parse_local_unified_messages_resolved(
+        options.clone(),
+        &home_dir,
+        &clients,
+        pricing.as_deref(),
+    )?;
+    let scan_result = scanner::scan_all_clients_with_scanner_settings(
+        &home_dir,
+        &clients,
+        options.use_env_roots,
+        &options.scanner_settings,
+    );
+
+    Ok(OpenMercatoLocalParseResult {
+        messages,
+        source_snapshots: build_open_mercato_source_snapshots(&scan_result),
+    })
 }
 
 fn unified_to_parsed(msg: &UnifiedMessage) -> ParsedMessage {

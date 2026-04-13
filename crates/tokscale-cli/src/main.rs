@@ -1,6 +1,7 @@
 mod auth;
 mod commands;
 mod cursor;
+mod om;
 mod tui;
 
 use crate::tui::client_ui;
@@ -603,6 +604,11 @@ enum Commands {
     },
     #[command(about = "Delete all submitted usage data from the server")]
     DeleteSubmittedData,
+    #[command(about = "Open Mercato collector commands")]
+    Om {
+        #[command(subcommand)]
+        subcommand: OmSubcommand,
+    },
 }
 
 #[derive(Subcommand)]
@@ -635,6 +641,60 @@ enum CursorSubcommand {
     Switch {
         #[arg(help = "Account label or id")]
         name: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum OmSubcommand {
+    #[command(about = "Write Open Mercato collector config")]
+    Configure {
+        #[arg(long, value_name = "URL")]
+        server_url: String,
+        #[arg(long, value_name = "TOKEN")]
+        device_token: String,
+        #[arg(long, value_name = "CHANNEL")]
+        channel: Option<String>,
+        #[arg(long, value_name = "FINGERPRINT")]
+        device_fingerprint: Option<String>,
+        #[arg(long, value_name = "HOUR", help = "Local hour for the daily scheduled sync")]
+        daily_hour_local: Option<u8>,
+        #[arg(long, value_name = "MINUTE", help = "Local minute for the daily scheduled sync")]
+        daily_minute_local: Option<u8>,
+        #[arg(long, help = "Run the scheduled sync every day instead of weekdays only")]
+        all_days: bool,
+    },
+    #[command(about = "Show Open Mercato collector status")]
+    Status,
+    #[command(about = "Scan local usage and upload finalized hourly buckets to Open Mercato")]
+    Sync {
+        #[arg(long, help = "Include only Codex CLI data")]
+        codex: bool,
+        #[arg(long, help = "Include only Claude Code data")]
+        claude: bool,
+        #[arg(long, help = "Build buckets but do not upload")]
+        dry_run: bool,
+    },
+    #[command(about = "Run the collector continuously in the foreground for manual or diagnostic use")]
+    Daemon {
+        #[arg(long, help = "Include only Codex CLI data")]
+        codex: bool,
+        #[arg(long, help = "Include only Claude Code data")]
+        claude: bool,
+        #[arg(long, help = "Build buckets but do not upload")]
+        dry_run: bool,
+        #[arg(long, hide = true)]
+        max_cycles: Option<usize>,
+        #[arg(long, hide = true)]
+        interval_seconds_override: Option<u64>,
+    },
+    #[command(about = "Install a per-user scheduled service for the collector")]
+    InstallService,
+    #[command(about = "Remove the per-user scheduled service for the collector")]
+    UninstallService,
+    #[command(about = "Re-queue blocked OM batches after operator action")]
+    RetryBlocked {
+        #[arg(long, value_name = "BATCH_ID")]
+        batch_id: Option<String>,
     },
 }
 
@@ -1172,6 +1232,7 @@ fn main() -> Result<()> {
             reject_unsupported_home_override(&cli.home, "delete-submitted-data")?;
             run_delete_data_command()
         }
+        Some(Commands::Om { subcommand }) => run_om_command(subcommand, cli.home.clone()),
         None => {
             let clients = build_client_filter(ClientFlags {
                 opencode: cli.opencode,
@@ -4208,6 +4269,76 @@ fn run_cursor_command(subcommand: CursorSubcommand) -> Result<()> {
         CursorSubcommand::Status { name } => cursor::run_cursor_status(name),
         CursorSubcommand::Accounts { json } => cursor::run_cursor_accounts(json),
         CursorSubcommand::Switch { name } => cursor::run_cursor_switch(&name),
+    }
+}
+
+fn run_om_command(subcommand: OmSubcommand, home_dir: Option<String>) -> Result<()> {
+    match subcommand {
+        OmSubcommand::Configure {
+            server_url,
+            device_token,
+            channel,
+            device_fingerprint,
+            daily_hour_local,
+            daily_minute_local,
+            all_days,
+        } => om::run_configure(
+            server_url,
+            device_token,
+            channel,
+            device_fingerprint,
+            daily_hour_local,
+            daily_minute_local,
+            all_days,
+        ),
+        OmSubcommand::Status => om::run_status(),
+        OmSubcommand::Sync {
+            codex,
+            claude,
+            dry_run,
+        } => {
+            let selected_clients = om_client_filter(codex, claude);
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async { om::run_sync(home_dir, selected_clients, dry_run).await })
+        }
+        OmSubcommand::Daemon {
+            codex,
+            claude,
+            dry_run,
+            max_cycles,
+            interval_seconds_override,
+        } => {
+            let selected_clients = om_client_filter(codex, claude);
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                om::run_daemon(
+                    home_dir,
+                    selected_clients,
+                    dry_run,
+                    max_cycles,
+                    interval_seconds_override,
+                )
+                .await
+            })
+        }
+        OmSubcommand::InstallService => om::run_install_service(),
+        OmSubcommand::UninstallService => om::run_uninstall_service(),
+        OmSubcommand::RetryBlocked { batch_id } => om::run_retry_blocked(batch_id),
+    }
+}
+
+fn om_client_filter(codex: bool, claude: bool) -> Option<Vec<String>> {
+    let mut clients = Vec::new();
+    if codex {
+        clients.push("codex".to_string());
+    }
+    if claude {
+        clients.push("claude".to_string());
+    }
+    if clients.is_empty() {
+        None
+    } else {
+        Some(clients)
     }
 }
 

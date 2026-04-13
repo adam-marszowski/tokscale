@@ -5,12 +5,13 @@ import { resolve, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const binaryName = process.platform === "win32" ? "tokscale.exe" : "tokscale";
+const packageScope = "@company";
 
 const currentDir = fileURLToPath(new URL(".", import.meta.url));
 const dirName = basename(currentDir);
-// In npm install: currentDir = .../node_modules/@tokscale/cli/dist/
-//   cliDir = .../node_modules/@tokscale/cli/
-//   scopeDir = .../node_modules/@tokscale/
+// In npm install: currentDir = .../node_modules/@company/tokscale-om/dist/
+//   cliDir = .../node_modules/@company/tokscale-om/
+//   scopeDir = .../node_modules/@company/
 // In monorepo dev (dist): currentDir = .../packages/cli/dist/
 //   cliDir = .../packages/cli/
 //   scopeDir = .../packages/
@@ -58,25 +59,29 @@ function resolveTargetPackageName(): string | null {
   const arch = process.arch;
 
   if (process.platform === "darwin") {
-    if (arch === "arm64") return "cli-darwin-arm64";
-    if (arch === "x64") return "cli-darwin-x64";
+    if (arch === "arm64") return "tokscale-om-darwin-arm64";
+    if (arch === "x64") return "tokscale-om-darwin-x64";
     return null;
   }
 
   if (process.platform === "linux") {
     const libc = detectLibcKind();
     if (arch === "arm64") {
-      return libc === "musl" ? "cli-linux-arm64-musl" : "cli-linux-arm64-gnu";
+      return libc === "musl"
+        ? "tokscale-om-linux-arm64-musl"
+        : "tokscale-om-linux-arm64-gnu";
     }
     if (arch === "x64") {
-      return libc === "musl" ? "cli-linux-x64-musl" : "cli-linux-x64-gnu";
+      return libc === "musl"
+        ? "tokscale-om-linux-x64-musl"
+        : "tokscale-om-linux-x64-gnu";
     }
     return null;
   }
 
   if (process.platform === "win32") {
-    if (arch === "arm64") return "cli-win32-arm64-msvc";
-    if (arch === "x64") return "cli-win32-x64-msvc";
+    if (arch === "arm64") return "tokscale-om-win32-arm64-msvc";
+    if (arch === "x64") return "tokscale-om-win32-x64-msvc";
     return null;
   }
 
@@ -121,15 +126,15 @@ const searchPaths: string[] = [];
 
 if (targetPackage) {
   searchPaths.push(
-    // npm/bun install: sibling scoped package (node_modules/@tokscale/cli-<platform>/bin/...)
+    // npm/bun install: sibling scoped package (node_modules/@company/tokscale-om-<platform>/bin/...)
     join(scopeDir, targetPackage, "bin", binaryName),
-    // Nested node_modules: non-hoisted / pnpm (node_modules/@tokscale/cli/node_modules/@tokscale/cli-<platform>/bin/...)
-    join(cliDir, "node_modules", "@tokscale", targetPackage, "bin", binaryName),
-    // Hoisted edge case (node_modules/@tokscale/node_modules/@tokscale/cli-<platform>/bin/...)
-    join(scopeDir, "node_modules", "@tokscale", targetPackage, "bin", binaryName),
-    join(workspaceRoot, "node_modules", "@tokscale", targetPackage, "bin", binaryName),
+    // Nested node_modules: non-hoisted / pnpm (node_modules/@company/tokscale-om/node_modules/@company/tokscale-om-<platform>/bin/...)
+    join(cliDir, "node_modules", packageScope, targetPackage, "bin", binaryName),
+    // Hoisted edge case (node_modules/@company/node_modules/@company/tokscale-om-<platform>/bin/...)
+    join(scopeDir, "node_modules", packageScope, targetPackage, "bin", binaryName),
+    join(workspaceRoot, "node_modules", packageScope, targetPackage, "bin", binaryName),
     // Monorepo development
-    join(workspaceRoot, "packages", targetPackage, "bin", binaryName),
+    join(workspaceRoot, "packages", targetPackage.replace("tokscale-om", "cli"), "bin", binaryName),
   );
 }
 
@@ -164,7 +169,7 @@ if (!binary) {
   console.error("Error: tokscale binary not found");
   console.error("Build from source: cargo build --release -p tokscale-cli");
   if (targetPackage) {
-    console.error(`Expected optional package: @tokscale/${targetPackage}`);
+    console.error(`Expected optional package: ${packageScope}/${targetPackage}`);
   }
   process.exit(1);
 }
