@@ -14,6 +14,10 @@ on:
       - "packages/cli-*/package.json"
       - "scripts/test-package-launchers.sh"
       - ".github/workflows/launcher_validation.yml"
+      - "package.json"
+      - "bun.lock"
+      - "Cargo.toml"
+      - "Cargo.lock"
   pull_request:
     branches: [main, develop]
     paths:
@@ -26,6 +30,10 @@ on:
       - "packages/cli-*/package.json"
       - "scripts/test-package-launchers.sh"
       - ".github/workflows/launcher_validation.yml"
+      - "package.json"
+      - "bun.lock"
+      - "Cargo.toml"
+      - "Cargo.lock"
 
 jobs:
   launcher-smoke:
