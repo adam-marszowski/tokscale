@@ -5,25 +5,27 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - "packages/cli/**"
-      - "packages/tokscale/**"
+      - "packages/cli/bin.js"
+      - "packages/cli/src/**"
+      - "packages/cli/tsconfig.json"
+      - "packages/cli/package.json"
+      - "packages/tokscale/bin.js"
+      - "packages/tokscale/package.json"
       - "packages/cli-*/package.json"
       - "scripts/test-package-launchers.sh"
-      - "package.json"
-      - "bun.lock"
-      - "Cargo.toml"
-      - "Cargo.lock"
+      - ".github/workflows/launcher_validation.yml"
   pull_request:
     branches: [main, develop]
     paths:
-      - "packages/cli/**"
-      - "packages/tokscale/**"
+      - "packages/cli/bin.js"
+      - "packages/cli/src/**"
+      - "packages/cli/tsconfig.json"
+      - "packages/cli/package.json"
+      - "packages/tokscale/bin.js"
+      - "packages/tokscale/package.json"
       - "packages/cli-*/package.json"
       - "scripts/test-package-launchers.sh"
-      - "package.json"
-      - "bun.lock"
-      - "Cargo.toml"
-      - "Cargo.lock"
+      - ".github/workflows/launcher_validation.yml"
 
 jobs:
   launcher-smoke:
