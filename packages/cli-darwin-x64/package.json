@@ -1,6 +1,6 @@
 {
   "name": "@softiq/tokscale-om-darwin-x64",
-  "version": "2.0.22",
+  "version": "2.0.23",
   "description": "tokscale-om native CLI binary for darwin x64",
   "license": "MIT",
   "type": "module",

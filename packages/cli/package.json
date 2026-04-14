@@ -1,6 +1,6 @@
 {
   "name": "@softiq/tokscale-om",
-  "version": "2.0.22",
+  "version": "2.0.23",
   "description": "SoftIQ-maintained Open Mercato collector for privacy-safe AI coding usage aggregation.",
   "license": "MIT",
   "type": "module",
@@ -29,14 +29,14 @@
   },
   "dependencies": {},
   "optionalDependencies": {
-    "@softiq/tokscale-om-darwin-arm64": "2.0.22",
-    "@softiq/tokscale-om-darwin-x64": "2.0.22",
-    "@softiq/tokscale-om-linux-x64-gnu": "2.0.22",
-    "@softiq/tokscale-om-linux-x64-musl": "2.0.22",
-    "@softiq/tokscale-om-linux-arm64-gnu": "2.0.22",
-    "@softiq/tokscale-om-linux-arm64-musl": "2.0.22",
-    "@softiq/tokscale-om-win32-x64-msvc": "2.0.22",
-    "@softiq/tokscale-om-win32-arm64-msvc": "2.0.22"
+    "@softiq/tokscale-om-darwin-arm64": "2.0.23",
+    "@softiq/tokscale-om-darwin-x64": "2.0.23",
+    "@softiq/tokscale-om-linux-x64-gnu": "2.0.23",
+    "@softiq/tokscale-om-linux-x64-musl": "2.0.23",
+    "@softiq/tokscale-om-linux-arm64-gnu": "2.0.23",
+    "@softiq/tokscale-om-linux-arm64-musl": "2.0.23",
+    "@softiq/tokscale-om-win32-x64-msvc": "2.0.23",
+    "@softiq/tokscale-om-win32-arm64-msvc": "2.0.23"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

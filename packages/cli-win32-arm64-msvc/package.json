@@ -1,6 +1,6 @@
 {
   "name": "@softiq/tokscale-om-win32-arm64-msvc",
-  "version": "2.0.22",
+  "version": "2.0.23",
   "description": "tokscale-om native CLI binary for win32 arm64 msvc",
   "license": "MIT",
   "type": "module",
