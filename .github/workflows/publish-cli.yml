@@ -395,9 +395,11 @@ jobs:
           echo "📦 Publishing $PACKAGE_NAME version: $VERSION"
           if npm view "$PACKAGE_NAME@$VERSION" version --registry https://registry.npmjs.org/ >/dev/null 2>&1; then
             echo "✅ $PACKAGE_NAME@$VERSION already exists on npm, skipping"
+            npm access set status=public "$PACKAGE_NAME" --registry https://registry.npmjs.org/
             exit 0
           fi
           bun publish --access public
+          npm access set status=public "$PACKAGE_NAME" --registry https://registry.npmjs.org/
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
