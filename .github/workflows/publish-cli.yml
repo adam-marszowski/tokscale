@@ -393,13 +393,17 @@ jobs:
           PACKAGE_NAME="$(jq -r '.name' package.json)"
           VERSION="$(jq -r '.version' package.json)"
           echo "📦 Publishing $PACKAGE_NAME version: $VERSION"
-          if npm view "$PACKAGE_NAME@$VERSION" version --registry https://registry.npmjs.org/ >/dev/null 2>&1; then
+          if env -u NPM_CONFIG_TOKEN npm view "$PACKAGE_NAME@$VERSION" version --registry https://registry.npmjs.org/ >/dev/null 2>&1; then
             echo "✅ $PACKAGE_NAME@$VERSION already exists on npm, skipping"
-            npm access set status=public "$PACKAGE_NAME" --registry https://registry.npmjs.org/
+            exit 0
+          fi
+          if npm view "$PACKAGE_NAME@$VERSION" version --registry https://registry.npmjs.org/ >/dev/null 2>&1; then
+            echo "⚠️ $PACKAGE_NAME@$VERSION exists on npm but is not publicly visible"
+            npm access set status=public "$PACKAGE_NAME" --registry https://registry.npmjs.org/ || echo "::warning::Unable to update npm package access with the configured token"
             exit 0
           fi
           bun publish --access public
-          npm access set status=public "$PACKAGE_NAME" --registry https://registry.npmjs.org/
+          npm access set status=public "$PACKAGE_NAME" --registry https://registry.npmjs.org/ || echo "::warning::Unable to update npm package access with the configured token"
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
