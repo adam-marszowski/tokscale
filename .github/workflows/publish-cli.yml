@@ -350,7 +350,12 @@ jobs:
       - name: Publish platform package
         working-directory: packages/${{ matrix.settings.package_dir }}
         run: |
-          echo "📦 Publishing ${{ matrix.settings.package_name }} version: $(jq -r '.version' package.json)"
+          VERSION="$(jq -r '.version' package.json)"
+          echo "📦 Publishing ${{ matrix.settings.package_name }} version: $VERSION"
+          if npm view "${{ matrix.settings.package_name }}@$VERSION" version --registry https://registry.npmjs.org/ >/dev/null 2>&1; then
+            echo "✅ ${{ matrix.settings.package_name }}@$VERSION already exists on npm, skipping"
+            exit 0
+          fi
           bun publish --access public
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -385,7 +390,13 @@ jobs:
       - name: Publish @softiq/tokscale-om
         working-directory: packages/cli
         run: |
-          echo "📦 Publishing version: $(jq -r '.version' package.json)"
+          PACKAGE_NAME="$(jq -r '.name' package.json)"
+          VERSION="$(jq -r '.version' package.json)"
+          echo "📦 Publishing $PACKAGE_NAME version: $VERSION"
+          if npm view "$PACKAGE_NAME@$VERSION" version --registry https://registry.npmjs.org/ >/dev/null 2>&1; then
+            echo "✅ $PACKAGE_NAME@$VERSION already exists on npm, skipping"
+            exit 0
+          fi
           bun publish --access public
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

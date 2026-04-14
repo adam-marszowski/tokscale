@@ -110,7 +110,7 @@
         "tokscale-om": "./bin.js",
       },
       "dependencies": {
-        "@softiq/tokscale-om": "2.0.22",
+        "@softiq/tokscale-om": "workspace:*",
       },
     },
   },
