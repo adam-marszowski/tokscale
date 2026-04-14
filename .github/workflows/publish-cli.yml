@@ -433,6 +433,10 @@ jobs:
           echo "📦 Committing version bump to $NEW_VERSION"
           
           git add Cargo.toml packages/cli/package.json packages/cli-darwin-arm64/package.json packages/cli-darwin-x64/package.json packages/cli-linux-x64-gnu/package.json packages/cli-linux-x64-musl/package.json packages/cli-linux-arm64-gnu/package.json packages/cli-linux-arm64-musl/package.json packages/cli-win32-x64-msvc/package.json packages/cli-win32-arm64-msvc/package.json
+          if git diff --cached --quiet; then
+            echo "✅ Version manifests already at $NEW_VERSION, skipping commit"
+            exit 0
+          fi
           git commit -m "chore: bump version to $NEW_VERSION"
           git push
           
