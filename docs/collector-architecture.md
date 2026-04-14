@@ -125,6 +125,7 @@ One hourly bucket is uniquely identified by:
 
 - default central identity: `workspaceFingerprint`
 - optional human-friendly `workspaceLabel`
+- privacy default: omit `workspaceLabel` from upload unless the collector explicitly enables it
 - no raw local path is uploaded
 
 ## Upload cadence

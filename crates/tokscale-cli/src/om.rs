@@ -15,8 +15,9 @@ use tokscale_core::{
 use uuid::Uuid;
 
 const CURRENT_STATE_SCHEMA_VERSION: u32 = 2;
-const DEFAULT_UPLOAD_PATH: &str = "/api/collector/batches";
+const DEFAULT_UPLOAD_PATH: &str = "/api/ai-usage/collector/v1/ingest";
 const DEFAULT_CHANNEL: &str = "stable";
+const DEFAULT_SCHEMA_VERSION: &str = "v1";
 const DEFAULT_BATCH_STATUS_PENDING: &str = "pending";
 const DEFAULT_BATCH_STATUS_RETRY_WAIT: &str = "retry_wait";
 const DEFAULT_BATCH_STATUS_ACKED: &str = "acked";
@@ -206,19 +207,45 @@ pub struct UploadBatchState {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct UploadBatchRequest {
+    schema_version: &'static str,
     collector_batch_id: String,
     collector_version: String,
     device_fingerprint: String,
-    channel: String,
-    generated_at: String,
-    bucket_count: usize,
-    buckets: Vec<OpenMercatoHourlyBucket>,
+    generated_at_utc: String,
+    window_start_utc: String,
+    window_end_utc: String,
+    buckets: Vec<UploadHourlyBucket>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UploadHourlyBucket {
+    hour_start_utc: String,
+    source_client: String,
+    provider_id: String,
+    model_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    agent_name: Option<String>,
+    workspace_fingerprint: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    workspace_label: Option<String>,
+    input_tokens: i64,
+    output_tokens: i64,
+    cache_read_tokens: i64,
+    cache_write_tokens: i64,
+    reasoning_tokens: i64,
+    message_count: i32,
+    turn_count: i32,
+    source_session_count: i32,
+    estimated_usd: f64,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct UploadBatchResponse {
     status: String,
+    #[serde(default)]
+    batch_id: Option<String>,
     #[serde(default)]
     server_batch_id: Option<String>,
     #[serde(default)]
@@ -265,8 +292,7 @@ pub fn run_configure(
     daily_minute_local: Option<u8>,
     all_days: bool,
 ) -> Result<()> {
-    let device_fingerprint =
-        device_fingerprint.unwrap_or_else(generate_device_fingerprint);
+    let device_fingerprint = device_fingerprint.unwrap_or_else(generate_device_fingerprint);
     let device_token_ref = default_token_ref(&device_fingerprint);
     store_device_token(&device_token_ref, &device_token)?;
     let mut schedule = OmScheduleConfig::default();
@@ -306,8 +332,14 @@ pub fn run_configure(
         "{}",
         format!("  Config: {}", config_path()?.display()).bright_black()
     );
-    println!("{}", format!("  Server: {}", config.server_url).bright_black());
-    println!("{}", format!("  Channel: {}", config.channel).bright_black());
+    println!(
+        "{}",
+        format!("  Server: {}", config.server_url).bright_black()
+    );
+    println!(
+        "{}",
+        format!("  Channel: {}", config.channel).bright_black()
+    );
     println!(
         "{}",
         format!(
@@ -326,7 +358,10 @@ pub fn run_configure(
         "{}",
         format!("  Device fingerprint: {}", config.device_fingerprint).bright_black()
     );
-    println!("{}", "  Device token: stored outside config file".bright_black());
+    println!(
+        "{}",
+        "  Device token: stored outside config file".bright_black()
+    );
     println!();
 
     Ok(())
@@ -340,8 +375,10 @@ pub fn run_status() -> Result<()> {
     let pending_batches = state
         .upload_ledger
         .values()
-        .filter(|batch| batch.ack_status == DEFAULT_BATCH_STATUS_PENDING
-            || batch.ack_status == DEFAULT_BATCH_STATUS_RETRY_WAIT)
+        .filter(|batch| {
+            batch.ack_status == DEFAULT_BATCH_STATUS_PENDING
+                || batch.ack_status == DEFAULT_BATCH_STATUS_RETRY_WAIT
+        })
         .count();
     let acked_batches = state
         .upload_ledger
@@ -370,12 +407,18 @@ pub fn run_status() -> Result<()> {
         "{}",
         format!("  State:  {}", state_path()?.display()).bright_black()
     );
-    println!("{}", format!("  Server: {}", config.server_url).bright_black());
+    println!(
+        "{}",
+        format!("  Server: {}", config.server_url).bright_black()
+    );
     println!(
         "{}",
         format!("  Upload URL: {}", upload_url(&config)).bright_black()
     );
-    println!("{}", format!("  Channel: {}", config.channel).bright_black());
+    println!(
+        "{}",
+        format!("  Channel: {}", config.channel).bright_black()
+    );
     println!(
         "{}",
         format!(
@@ -470,7 +513,11 @@ pub async fn run_sync(
     let summary = sync_once(home_dir, clients, dry_run, false).await?;
     println!(
         "{}",
-        format!("  Uploaded batches this run: {}", summary.uploaded_batch_count).bright_black()
+        format!(
+            "  Uploaded batches this run: {}",
+            summary.uploaded_batch_count
+        )
+        .bright_black()
     );
     println!();
     Ok(())
@@ -484,9 +531,8 @@ pub async fn run_daemon(
     interval_seconds_override: Option<u64>,
 ) -> Result<()> {
     let config = load_config()?;
-    let interval = interval_seconds_override.unwrap_or_else(|| {
-        u64::from(config.upload.interval_minutes.max(1)).saturating_mul(60)
-    });
+    let interval = interval_seconds_override
+        .unwrap_or_else(|| u64::from(config.upload.interval_minutes.max(1)).saturating_mul(60));
 
     println!("\n  {}\n", "Open Mercato collector daemon".cyan());
     println!(
@@ -663,7 +709,11 @@ async fn sync_once(
         );
         println!(
             "{}",
-            format!("  Finalized closed buckets: {}", state.finalized_buckets.len()).bright_black()
+            format!(
+                "  Finalized closed buckets: {}",
+                state.finalized_buckets.len()
+            )
+            .bright_black()
         );
         println!(
             "{}",
@@ -679,7 +729,10 @@ async fn sync_once(
     let mut uploaded_batch_count = 0usize;
     if dry_run {
         if !quiet {
-            println!("{}", "  Dry run - not uploading to Open Mercato.\n".yellow());
+            println!(
+                "{}",
+                "  Dry run - not uploading to Open Mercato.\n".yellow()
+            );
         }
     } else {
         let device_token = load_device_token(&config)?;
@@ -691,14 +744,20 @@ async fn sync_once(
                 );
             }
 
+            let buckets = apply_workspace_label_strategy(
+                upload.buckets.clone(),
+                config.workspace_label_strategy.as_deref(),
+            );
+            let (window_start_utc, window_end_utc) = batch_window_bounds(&buckets)?;
             let request = UploadBatchRequest {
+                schema_version: DEFAULT_SCHEMA_VERSION,
                 collector_batch_id: upload.batch_id.clone(),
                 collector_version: env!("CARGO_PKG_VERSION").to_string(),
                 device_fingerprint: config.device_fingerprint.clone(),
-                channel: config.channel.clone(),
-                generated_at: now.to_rfc3339(),
-                bucket_count: upload.buckets.len(),
-                buckets: upload.buckets.clone(),
+                generated_at_utc: now.to_rfc3339(),
+                window_start_utc,
+                window_end_utc,
+                buckets: upload_bucket_payloads(buckets),
             };
 
             let response = reqwest::Client::new()
@@ -844,7 +903,9 @@ fn create_pending_batches(
     let mut unbatched: Vec<String> = state
         .finalized_buckets
         .iter()
-        .filter(|(_, bucket)| !bucket.acknowledged && !bucket.blocked && bucket.batch_membership.is_none())
+        .filter(|(_, bucket)| {
+            !bucket.acknowledged && !bucket.blocked && bucket.batch_membership.is_none()
+        })
         .map(|(bucket_key, _)| bucket_key.clone())
         .collect();
     unbatched.sort_unstable();
@@ -976,9 +1037,11 @@ fn handle_upload_response(
             return Err(anyhow!("Open Mercato returned unexpected ack status"));
         }
 
-        let server_batch_id = response
-            .as_ref()
-            .and_then(|body| body.server_batch_id.clone());
+        let server_batch_id = response.as_ref().and_then(|body| {
+            body.batch_id
+                .clone()
+                .or_else(|| body.server_batch_id.clone())
+        });
         let batch = state
             .upload_ledger
             .get_mut(batch_id)
@@ -1019,7 +1082,14 @@ fn handle_upload_response(
         if !detail_lines.is_empty() {
             message.push_str(&format!(" ({})", detail_lines.join("; ")));
         }
-        mark_batch_blocked(state, batch_id, bucket_keys, &message, server_ack_status, sent_at)?;
+        mark_batch_blocked(
+            state,
+            batch_id,
+            bucket_keys,
+            &message,
+            server_ack_status,
+            sent_at,
+        )?;
         return Err(anyhow!(message));
     }
 
@@ -1042,10 +1112,7 @@ fn mark_batch_retry(
     batch.retry_count = batch.retry_count.saturating_add(1);
     batch.ack_status = DEFAULT_BATCH_STATUS_RETRY_WAIT.to_string();
     batch.last_error = Some(error.to_string());
-    batch.next_attempt_at = Some(
-        compute_backoff_time(sent_at, batch.retry_count)
-            .to_rfc3339(),
-    );
+    batch.next_attempt_at = Some(compute_backoff_time(sent_at, batch.retry_count).to_rfc3339());
 
     for bucket_key in bucket_keys {
         if let Some(bucket) = state.finalized_buckets.get_mut(bucket_key) {
@@ -1161,7 +1228,71 @@ fn upload_url(config: &OmConfig) -> String {
 }
 
 fn default_v1_clients() -> Vec<String> {
-    OM_V1_CLIENTS.iter().map(|client| (*client).to_string()).collect()
+    OM_V1_CLIENTS
+        .iter()
+        .map(|client| (*client).to_string())
+        .collect()
+}
+
+fn apply_workspace_label_strategy(
+    mut buckets: Vec<OpenMercatoHourlyBucket>,
+    strategy: Option<&str>,
+) -> Vec<OpenMercatoHourlyBucket> {
+    let preserve_labels = matches!(
+        strategy.map(str::trim).filter(|value| !value.is_empty()),
+        Some("preserve")
+    );
+
+    if !preserve_labels {
+        for bucket in &mut buckets {
+            bucket.workspace_label = None;
+        }
+    }
+
+    buckets
+}
+
+fn upload_bucket_payloads(buckets: Vec<OpenMercatoHourlyBucket>) -> Vec<UploadHourlyBucket> {
+    buckets
+        .into_iter()
+        .map(|bucket| UploadHourlyBucket {
+            hour_start_utc: bucket.hour_start_utc,
+            source_client: bucket.source_client,
+            provider_id: bucket.provider_id,
+            model_id: bucket.model_id,
+            agent_name: bucket.agent_name,
+            workspace_fingerprint: bucket.workspace_fingerprint,
+            workspace_label: bucket.workspace_label,
+            input_tokens: bucket.input_tokens,
+            output_tokens: bucket.output_tokens,
+            cache_read_tokens: bucket.cache_read_tokens,
+            cache_write_tokens: bucket.cache_write_tokens,
+            reasoning_tokens: bucket.reasoning_tokens,
+            message_count: bucket.message_count,
+            turn_count: bucket.turn_count,
+            source_session_count: bucket.source_session_count,
+            estimated_usd: bucket.estimated_usd,
+        })
+        .collect()
+}
+
+fn batch_window_bounds(buckets: &[OpenMercatoHourlyBucket]) -> Result<(String, String)> {
+    let mut hours = buckets.iter().map(|bucket| bucket.hour_start_utc.as_str());
+    let Some(mut min_hour) = hours.next() else {
+        return Err(anyhow!("Cannot build OM ingest batch without buckets"));
+    };
+    let mut max_hour = min_hour;
+
+    for hour in hours {
+        if hour < min_hour {
+            min_hour = hour;
+        }
+        if hour > max_hour {
+            max_hour = hour;
+        }
+    }
+
+    Ok((min_hour.to_string(), max_hour.to_string()))
 }
 
 fn generate_device_fingerprint() -> String {
@@ -1287,22 +1418,28 @@ fn normalize_loaded_state(state: &mut CollectorState) {
     }
 
     for batch in state.upload_ledger.values_mut() {
-        batch.ack_status = normalize_batch_status(&batch.ack_status, batch.server_ack_status.as_deref());
+        batch.ack_status =
+            normalize_batch_status(&batch.ack_status, batch.server_ack_status.as_deref());
         if batch.ack_status == DEFAULT_BATCH_STATUS_ACKED {
             batch.next_attempt_at = None;
         }
         if batch.ack_status == DEFAULT_BATCH_STATUS_RETRY_WAIT && batch.next_attempt_at.is_none() {
-            let sent_at = batch.sent_at.as_deref().and_then(parse_rfc3339_utc).unwrap_or_else(Utc::now);
-            batch.next_attempt_at = Some(
-                compute_backoff_time(sent_at, batch.retry_count.max(1)).to_rfc3339(),
-            );
+            let sent_at = batch
+                .sent_at
+                .as_deref()
+                .and_then(parse_rfc3339_utc)
+                .unwrap_or_else(Utc::now);
+            batch.next_attempt_at =
+                Some(compute_backoff_time(sent_at, batch.retry_count.max(1)).to_rfc3339());
         }
     }
 }
 
 fn normalize_batch_status(status: &str, server_ack_status: Option<&str>) -> String {
     match status {
-        "accepted" | "duplicate" | DEFAULT_BATCH_STATUS_ACKED => DEFAULT_BATCH_STATUS_ACKED.to_string(),
+        "accepted" | "duplicate" | DEFAULT_BATCH_STATUS_ACKED => {
+            DEFAULT_BATCH_STATUS_ACKED.to_string()
+        }
         DEFAULT_BATCH_STATUS_PENDING => DEFAULT_BATCH_STATUS_PENDING.to_string(),
         DEFAULT_BATCH_STATUS_RETRY_WAIT => DEFAULT_BATCH_STATUS_RETRY_WAIT.to_string(),
         DEFAULT_BATCH_STATUS_BLOCKED => DEFAULT_BATCH_STATUS_BLOCKED.to_string(),
@@ -1367,20 +1504,16 @@ fn keyring_disabled() -> bool {
 
 fn store_device_token(token_ref: &str, token: &str) -> Result<()> {
     ensure_root_dir()?;
+    let path = token_fallback_path(token_ref)?;
+    write_secure_string(&path, token)?;
 
     if !keyring_disabled() {
         if let Ok(entry) = keyring::Entry::new(DEFAULT_TOKEN_SERVICE, token_ref) {
-            if entry.set_password(token).is_ok() {
-                if let Ok(path) = token_fallback_path(token_ref) {
-                    let _ = fs::remove_file(path);
-                }
-                return Ok(());
-            }
+            let _ = entry.set_password(token);
         }
     }
 
-    let path = token_fallback_path(token_ref)?;
-    write_secure_string(&path, token)
+    Ok(())
 }
 
 fn load_stored_device_token(token_ref: &str) -> Result<String> {
@@ -1497,7 +1630,9 @@ fn install_launchd_service(command: &[String], schedule: &OmScheduleConfig) -> R
     fs::create_dir_all(parent)?;
     write_secure_string(&plist_path, &render_launchd_plist(command, schedule))?;
 
-    let _ = Command::new("launchctl").args(["unload", plist_path.to_str().unwrap_or_default()]).output();
+    let _ = Command::new("launchctl")
+        .args(["unload", plist_path.to_str().unwrap_or_default()])
+        .output();
     let output = Command::new("launchctl")
         .args(["load", "-w", plist_path.to_str().unwrap_or_default()])
         .output()
@@ -1510,10 +1645,7 @@ fn install_launchd_service(command: &[String], schedule: &OmScheduleConfig) -> R
     }
 
     println!("\n  {}\n", "Installed launchd scheduled run.".green());
-    println!(
-        "{}",
-        format!("  {}", plist_path.display()).bright_black()
-    );
+    println!("{}", format!("  {}", plist_path.display()).bright_black());
     println!();
 
     Ok(())
@@ -1546,10 +1678,7 @@ fn install_systemd_service(command: &[String], schedule: &OmScheduleConfig) -> R
     run_systemctl_user(["enable", "--now", DEFAULT_SYSTEMD_TIMER])?;
 
     println!("\n  {}\n", "Installed systemd user timer.".green());
-    println!(
-        "{}",
-        format!("  {}", timer_path.display()).bright_black()
-    );
+    println!("{}", format!("  {}", timer_path.display()).bright_black());
     println!();
 
     Ok(())
@@ -1699,13 +1828,15 @@ fn render_launchd_schedule(schedule: &OmScheduleConfig) -> String {
         })
         .collect::<String>();
 
-    format!(
-        "  <key>StartCalendarInterval</key>\n  <array>\n{items}  </array>\n"
-    )
+    format!("  <key>StartCalendarInterval</key>\n  <array>\n{items}  </array>\n")
 }
 
 fn systemd_on_calendar(schedule: &OmScheduleConfig) -> String {
-    let prefix = if schedule.weekdays_only { "Mon..Fri " } else { "" };
+    let prefix = if schedule.weekdays_only {
+        "Mon..Fri "
+    } else {
+        ""
+    };
     format!(
         "{prefix}*-*-* {:02}:{:02}:00",
         schedule.daily_hour_local, schedule.daily_minute_local
@@ -1902,6 +2033,23 @@ mod tests {
 
     #[test]
     #[serial]
+    fn store_device_token_keeps_fallback_when_keyring_is_enabled() {
+        let temp = TempDir::new().unwrap();
+        let _config_guard = EnvGuard::set("TOKSCALE_OM_CONFIG_DIR", temp.path().to_str().unwrap());
+        let _keyring_guard = EnvGuard::set("TOKSCALE_OM_DISABLE_KEYRING", "0");
+
+        store_device_token("device-token:device-123", "secret").unwrap();
+
+        let token_file = token_fallback_path("device-token:device-123").unwrap();
+        assert_eq!(fs::read_to_string(token_file).unwrap(), "secret");
+        assert_eq!(
+            load_stored_device_token("device-token:device-123").unwrap(),
+            "secret"
+        );
+    }
+
+    #[test]
+    #[serial]
     fn configure_rejects_invalid_daily_schedule() {
         let temp = TempDir::new().unwrap();
         let _config_guard = EnvGuard::set("TOKSCALE_OM_CONFIG_DIR", temp.path().to_str().unwrap());
@@ -1927,6 +2075,32 @@ mod tests {
         let first = stable_batch_id("device-123", &buckets);
         let second = stable_batch_id("device-123", &buckets);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn workspace_labels_are_omitted_by_default() {
+        let buckets = apply_workspace_label_strategy(vec![sample_bucket("bucket-1")], None);
+        assert!(buckets[0].workspace_label.is_none());
+    }
+
+    #[test]
+    fn workspace_labels_can_be_preserved_explicitly() {
+        let buckets =
+            apply_workspace_label_strategy(vec![sample_bucket("bucket-1")], Some("preserve"));
+        assert_eq!(buckets[0].workspace_label.as_deref(), Some("repo-a"));
+    }
+
+    #[test]
+    fn batch_window_bounds_use_min_and_max_bucket_hours() {
+        let mut first = sample_bucket("bucket-1");
+        first.hour_start_utc = "2026-04-13T07:00:00Z".to_string();
+        let mut second = sample_bucket("bucket-2");
+        second.hour_start_utc = "2026-04-13T09:00:00Z".to_string();
+
+        let (window_start_utc, window_end_utc) = batch_window_bounds(&[second, first]).unwrap();
+
+        assert_eq!(window_start_utc, "2026-04-13T07:00:00Z");
+        assert_eq!(window_end_utc, "2026-04-13T09:00:00Z");
     }
 
     #[test]
@@ -2082,13 +2256,14 @@ mod tests {
             .insert("bucket-1".to_string(), bucket_state("bucket-1", false));
 
         let request = UploadBatchRequest {
+            schema_version: DEFAULT_SCHEMA_VERSION,
             collector_batch_id: "batch-1".to_string(),
             collector_version: "2.0.22".to_string(),
             device_fingerprint: "device-123".to_string(),
-            channel: "stable".to_string(),
-            generated_at: "2026-04-13T10:00:00Z".to_string(),
-            bucket_count: 1,
-            buckets: vec![sample_bucket("bucket-1")],
+            generated_at_utc: "2026-04-13T10:00:00Z".to_string(),
+            window_start_utc: "2026-04-13T09:00:00Z".to_string(),
+            window_end_utc: "2026-04-13T09:00:00Z".to_string(),
+            buckets: upload_bucket_payloads(vec![sample_bucket("bucket-1")]),
         };
 
         let state_json = serde_json::to_string(&state).unwrap();
@@ -2098,6 +2273,7 @@ mod tests {
         assert!(!state_json.contains("secret-token"));
         assert!(!request_json.contains("/Users/alice/company/repo"));
         assert!(!request_json.contains("secret-token"));
+        assert!(!request_json.contains("bucketKey"));
     }
 
     #[test]
@@ -2106,8 +2282,10 @@ mod tests {
         let runtime = Runtime::new().unwrap();
         let config_dir = TempDir::new().unwrap();
         let home_dir = TempDir::new().unwrap();
-        let _config_guard =
-            EnvGuard::set("TOKSCALE_OM_CONFIG_DIR", config_dir.path().to_str().unwrap());
+        let _config_guard = EnvGuard::set(
+            "TOKSCALE_OM_CONFIG_DIR",
+            config_dir.path().to_str().unwrap(),
+        );
         let _keyring_guard = EnvGuard::set("TOKSCALE_OM_DISABLE_KEYRING", "1");
         let _pricing_guard = EnvGuard::set("TOKSCALE_PRICING_CACHE_ONLY", "1");
 
@@ -2154,18 +2332,20 @@ mod tests {
     async fn sync_upload_marks_batches_acked_on_duplicate() {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/api/collector/batches"))
+            .and(path("/api/ai-usage/collector/v1/ingest"))
             .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
                 "status": "duplicate",
-                "serverBatchId": "server-1"
+                "batchId": "server-1"
             })))
             .mount(&server)
             .await;
 
         let config_dir = TempDir::new().unwrap();
         let home_dir = TempDir::new().unwrap();
-        let _config_guard =
-            EnvGuard::set("TOKSCALE_OM_CONFIG_DIR", config_dir.path().to_str().unwrap());
+        let _config_guard = EnvGuard::set(
+            "TOKSCALE_OM_CONFIG_DIR",
+            config_dir.path().to_str().unwrap(),
+        );
         let _keyring_guard = EnvGuard::set("TOKSCALE_OM_DISABLE_KEYRING", "1");
         let _pricing_guard = EnvGuard::set("TOKSCALE_PRICING_CACHE_ONLY", "1");
 
@@ -2214,7 +2394,7 @@ mod tests {
     async fn sync_upload_persists_blocked_state_on_rejected_response() {
         let server = MockServer::start().await;
         Mock::given(method("POST"))
-            .and(path("/api/collector/batches"))
+            .and(path("/api/ai-usage/collector/v1/ingest"))
             .respond_with(ResponseTemplate::new(400).set_body_json(serde_json::json!({
                 "status": "invalid",
                 "error": "bad payload",
@@ -2225,8 +2405,10 @@ mod tests {
 
         let config_dir = TempDir::new().unwrap();
         let home_dir = TempDir::new().unwrap();
-        let _config_guard =
-            EnvGuard::set("TOKSCALE_OM_CONFIG_DIR", config_dir.path().to_str().unwrap());
+        let _config_guard = EnvGuard::set(
+            "TOKSCALE_OM_CONFIG_DIR",
+            config_dir.path().to_str().unwrap(),
+        );
         let _keyring_guard = EnvGuard::set("TOKSCALE_OM_DISABLE_KEYRING", "1");
         let _pricing_guard = EnvGuard::set("TOKSCALE_PRICING_CACHE_ONLY", "1");
 

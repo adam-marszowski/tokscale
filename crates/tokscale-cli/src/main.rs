@@ -656,11 +656,22 @@ enum OmSubcommand {
         channel: Option<String>,
         #[arg(long, value_name = "FINGERPRINT")]
         device_fingerprint: Option<String>,
-        #[arg(long, value_name = "HOUR", help = "Local hour for the daily scheduled sync")]
+        #[arg(
+            long,
+            value_name = "HOUR",
+            help = "Local hour for the daily scheduled sync"
+        )]
         daily_hour_local: Option<u8>,
-        #[arg(long, value_name = "MINUTE", help = "Local minute for the daily scheduled sync")]
+        #[arg(
+            long,
+            value_name = "MINUTE",
+            help = "Local minute for the daily scheduled sync"
+        )]
         daily_minute_local: Option<u8>,
-        #[arg(long, help = "Run the scheduled sync every day instead of weekdays only")]
+        #[arg(
+            long,
+            help = "Run the scheduled sync every day instead of weekdays only"
+        )]
         all_days: bool,
     },
     #[command(about = "Show Open Mercato collector status")]
@@ -674,7 +685,9 @@ enum OmSubcommand {
         #[arg(long, help = "Build buckets but do not upload")]
         dry_run: bool,
     },
-    #[command(about = "Run the collector continuously in the foreground for manual or diagnostic use")]
+    #[command(
+        about = "Run the collector continuously in the foreground for manual or diagnostic use"
+    )]
     Daemon {
         #[arg(long, help = "Include only Codex CLI data")]
         codex: bool,

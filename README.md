@@ -63,6 +63,8 @@ This repository now includes an initial Open Mercato collector implementation fo
 - per-user scheduled install/uninstall for `launchd` on macOS and `systemd --user` on Linux,
 - default daily local schedule at `13:00` on weekdays, configurable in `tokscale om configure`,
 - upload batching with deterministic sub-batches, local ack tracking, retry/backoff, and blocked-batch handling,
-- device token storage outside `config.json` with keyring-first storage and a secure local fallback.
+- device token storage outside `config.json` with keyring-first storage and a secure local fallback,
+- ingest payloads aligned to the Open Mercato V1 collector contract at `/api/ai-usage/collector/v1/ingest`,
+- workspace labels omitted from central upload by default unless explicitly enabled in collector config.
 
 Enrollment still remains a placeholder around a manually supplied device token until the server-side Open Mercato flow is available.

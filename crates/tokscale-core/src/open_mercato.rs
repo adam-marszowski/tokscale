@@ -146,7 +146,9 @@ pub fn build_open_mercato_hourly_buckets(
         }
         entry.input_tokens = entry.input_tokens.saturating_add(msg.tokens.input);
         entry.output_tokens = entry.output_tokens.saturating_add(msg.tokens.output);
-        entry.cache_read_tokens = entry.cache_read_tokens.saturating_add(msg.tokens.cache_read);
+        entry.cache_read_tokens = entry
+            .cache_read_tokens
+            .saturating_add(msg.tokens.cache_read);
         entry.cache_write_tokens = entry
             .cache_write_tokens
             .saturating_add(msg.tokens.cache_write);
@@ -216,7 +218,9 @@ fn hex_sha256(bytes: &[u8]) -> String {
     format!("{:x}", hasher.finalize())
 }
 
-pub fn build_open_mercato_source_snapshots(scan_result: &ScanResult) -> Vec<OpenMercatoSourceSnapshot> {
+pub fn build_open_mercato_source_snapshots(
+    scan_result: &ScanResult,
+) -> Vec<OpenMercatoSourceSnapshot> {
     let mut snapshots = Vec::new();
 
     snapshots.extend(
@@ -329,16 +333,31 @@ mod tests {
         let now = DateTime::parse_from_rfc3339("2026-04-13T10:15:00Z")
             .unwrap()
             .with_timezone(&Utc);
-        let msg_a = make_message("s-1", now.timestamp_millis() - 60 * 60 * 1000, Some("builder"), Some("/repo-a"));
-        let msg_b = make_message("s-2", now.timestamp_millis() - 60 * 60 * 1000, Some("reviewer"), Some("/repo-b"));
+        let msg_a = make_message(
+            "s-1",
+            now.timestamp_millis() - 60 * 60 * 1000,
+            Some("builder"),
+            Some("/repo-a"),
+        );
+        let msg_b = make_message(
+            "s-2",
+            now.timestamp_millis() - 60 * 60 * 1000,
+            Some("reviewer"),
+            Some("/repo-b"),
+        );
 
         let buckets = build_open_mercato_hourly_buckets(vec![msg_a, msg_b], now);
 
         assert_eq!(buckets.len(), 2);
-        assert_ne!(buckets[0].workspace_fingerprint, buckets[1].workspace_fingerprint);
+        assert_ne!(
+            buckets[0].workspace_fingerprint,
+            buckets[1].workspace_fingerprint
+        );
         assert_ne!(buckets[0].agent_name, buckets[1].agent_name);
         assert!(
-            buckets.iter().all(|bucket| bucket.workspace_label.is_some()),
+            buckets
+                .iter()
+                .all(|bucket| bucket.workspace_label.is_some()),
             "workspace label may be sent, but not the raw workspace path"
         );
     }
