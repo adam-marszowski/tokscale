@@ -347,7 +347,7 @@ fn test_version_flag() {
         .assert()
         .success()
         .stdout(predicate::str::contains(format!(
-            "tokscale {}",
+            "tokscale-om {}",
             env!("CARGO_PKG_VERSION")
         )));
 }

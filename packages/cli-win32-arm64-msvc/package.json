@@ -1,7 +1,7 @@
 {
-  "name": "@company/tokscale-om-win32-arm64-msvc",
+  "name": "@softiq/tokscale-om-win32-arm64-msvc",
   "version": "2.0.22",
-  "description": "tokscale CLI binary for win32 arm64 msvc",
+  "description": "tokscale-om native CLI binary for win32 arm64 msvc",
   "license": "MIT",
   "type": "module",
   "os": [
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/junhoyeo/tokscale.git",
+    "url": "git+https://github.com/softiq/tokscale-om.git",
     "directory": "packages/cli-win32-arm64-msvc"
   }
 }

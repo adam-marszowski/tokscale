@@ -85,7 +85,7 @@ fix: hardening wave 1 compliance fixes         ❌  (PR title)
 
 ### Overview
 
-Releases are published to npm via a GitHub Actions `workflow_dispatch` pipeline, followed by a manually created GitHub Release with handwritten notes. There is no staging environment — publishes go directly to npm `latest`.
+Releases are published to npm via a GitHub Actions `workflow_dispatch` pipeline, followed by an automated git tag and GitHub Release. There is no staging environment — publishes go directly to npm `latest`.
 
 ### Release Pipeline
 
@@ -99,30 +99,21 @@ Releases are published to npm via a GitHub Actions `workflow_dispatch` pipeline,
 
 **Stages (sequential):**
 
-| # | Job | Description |
-|---|-----|-------------|
-| 1 | `bump-versions` | Reads current version from `packages/cli/package.json`, calculates new version, updates the Rust workspace version plus the CLI, wrapper, and platform package manifests, then uploads the bumped manifests as an artifact |
-| 2 | `build-cli-binary` | 8-target parallel native Rust builds (macOS x86/arm64, Linux glibc/musl x86/arm64, Windows x86/arm64) |
-| 3 | `publish-platform-packages` | Publishes platform-specific packages (`@tokscale/cli-darwin-arm64`, etc.) containing native binaries to npm |
-| 4 | `publish-cli` | Publishes `@tokscale/cli` to npm (binary dispatcher + optionalDependencies) |
-| 5 | `publish-alias` | Publishes `tokscale` wrapper package to npm |
-| 6 | `finalize` | Commits the bumped release manifests back to repo as `chore: bump version to X.Y.Z` (authored by `github-actions[bot]`) |
+| Job | Description |
+|-----|-------------|
+| `bump-versions` | Reads current version from `packages/cli/package.json`, calculates new version, updates the Rust workspace version plus the CLI and platform package manifests, then uploads the bumped manifests as an artifact |
+| `build-cli-binary` | Parallel native Rust builds for supported targets |
+| `publish-platform-packages` | Publishes platform-specific packages (`@softiq/tokscale-om-*`) containing native binaries to npm |
+| `publish-cli` | Publishes `@softiq/tokscale-om` to npm (binary dispatcher + optionalDependencies) |
+| `finalize` | Commits the bumped release manifests back to repo as `chore: bump version to X.Y.Z` (authored by `github-actions[bot]`) |
 
 **Duration:** ~15-20 minutes end-to-end.
 
-**Package publish chain:** `@tokscale/cli` (with platform packages as optionalDependencies) → `tokscale` (depends on cli). Each waits for the previous to succeed.
+**Package publish chain:** `@softiq/tokscale-om-*` platform packages → `@softiq/tokscale-om` (with platform packages as optionalDependencies). Each waits for the previous to succeed.
 
 ### Post-Pipeline: Git Tag & GitHub Release
 
-The CI pipeline does **NOT** create the git tag or GitHub Release. After the workflow completes successfully:
-
-1. Verify the `chore: bump version to X.Y.Z` commit was pushed by CI
-2. Create a GitHub Release manually:
-   - **Tag:** `vX.Y.Z` (e.g., `v1.2.1`)
-   - **Target:** The `chore: bump version to X.Y.Z` commit
-   - **Title:** See [Release Notes Style](#release-notes-style) below
-   - **Body:** See [Release Notes Template](#release-notes-template) below
-3. Publish the release (not as draft, not as prerelease)
+The `finalize` job pushes the `chore: bump version to X.Y.Z` commit, creates tag `vX.Y.Z`, and creates or updates the GitHub Release using `scripts/generate-release-notes.ts`.
 
 ### Versioning Conventions
 
@@ -136,7 +127,6 @@ Release version is stored in the Rust workspace and the npm package manifests, a
 - `Cargo.toml` (`[workspace.package].version`) — Rust binary and exported metadata version
 - `packages/cli/package.json` — CLI package version and platform optional dependency versions
 - Platform packages (`packages/cli-*/package.json`) — native package versions
-- `packages/tokscale/package.json` — wrapper version plus `@tokscale/cli` dependency version
 
 ### CI-Only Workflow
 
@@ -150,33 +140,33 @@ Release version is stored in the Rust workspace and the npm package manifests, a
 
 | Release Type | Title Format |
 |-------------|--------------|
-| Standard patch/minor | `` `tokscale@vX.Y.Z` is here! `` |
-| Flagship feature | `` EMOJI `tokscale@vX.Y.Z` is here! (Short subtitle with [link](...)) `` |
+| Standard patch/minor | `` `@softiq/tokscale-om@vX.Y.Z` is here! `` |
+| Flagship feature | `` EMOJI `@softiq/tokscale-om@vX.Y.Z` is here! (Short subtitle with [link](...)) `` |
 | Feature spotlight | Custom banner image replacing the standard hero + call-to-action |
 
 **Examples from past releases:**
-- Standard: `` `tokscale@v1.1.2` is here! ``
-- Flagship: `` 🦞 `tokscale@v1.2.0` is here! (Now supports [OpenClaw](https://github.com/openclaw/openclaw)) ``
-- Spotlight: Custom Wrapped 2025 banner + `` Generate your Wrapped 2025 with `tokscale@v1.0.16` ``
+- Standard: `` `@softiq/tokscale-om@v1.1.2` is here! ``
+- Flagship: `` 🦞 `@softiq/tokscale-om@v1.2.0` is here! (Now supports [OpenClaw](https://github.com/openclaw/openclaw)) ``
+- Spotlight: Custom Wrapped 2025 banner + `` Generate your Wrapped 2025 with `@softiq/tokscale-om@v1.0.16` ``
 
 #### Release Notes Template
 
 ```markdown
 <div align="center">
 
-[![Tokscale](https://github.com/junhoyeo/tokscale/raw/main/.github/assets/hero-v2.png)](https://github.com/junhoyeo/tokscale)
+[![Tokscale](https://github.com/softiq/tokscale-om/raw/main/.github/assets/hero-v2.png)](https://github.com/softiq/tokscale-om)
 
-# `tokscale@vX.Y.Z` is here!
+# `@softiq/tokscale-om@vX.Y.Z` is here!
 </div>
 
 ## What's Changed
-* scope(area): description by @author in https://github.com/junhoyeo/tokscale/pull/NNN
-* scope(area): description by @author in https://github.com/junhoyeo/tokscale/pull/NNN
+* scope(area): description by @author in https://github.com/softiq/tokscale-om/pull/NNN
+* scope(area): description by @author in https://github.com/softiq/tokscale-om/pull/NNN
 
 ## New Contributors
-* @username made their first contribution in https://github.com/junhoyeo/tokscale/pull/NNN
+* @username made their first contribution in https://github.com/softiq/tokscale-om/pull/NNN
 
-**Full Changelog**: https://github.com/junhoyeo/tokscale/compare/vPREVIOUS...vNEW
+**Full Changelog**: https://github.com/softiq/tokscale-om/compare/vPREVIOUS...vNEW
 ```
 
 #### Style Rules
@@ -184,7 +174,7 @@ Release version is stored in the Rust workspace and the npm package manifests, a
 | Element | Rule |
 |---------|------|
 | **Header** | Always centered `<div align="center">` with hero banner image linked to the repo |
-| **Title** | Backtick-wrapped `tokscale@vX.Y.Z` — package name, not just version |
+| **Title** | Backtick-wrapped `@softiq/tokscale-om@vX.Y.Z` — package name, not just version |
 | **PR list** | `* scope(area): description by @author in URL` — mirrors the PR title exactly as merged |
 | **Optional summary** | For releases with many changes or when PR titles alone don't convey impact, add a brief bullet list between the title and "What's Changed" (see v1.0.18 as example) |
 | **New Contributors** | Include section when there are first-time contributors |
@@ -214,12 +204,9 @@ Add a short bullet list summary (before "What's Changed") when:
 3. [ ] No open blocker bugs (regressions from changes being released)
 4. [ ] Run "Publish" workflow via GitHub Actions UI
    - Select bump type (patch/minor/major)
-   - Wait for all 6 stages to complete
+   - Wait for all stages to complete
 5. [ ] Verify `chore: bump version to X.Y.Z` commit was pushed
-6. [ ] Verify packages on npm: @tokscale/cli, tokscale
-7. [ ] Create GitHub Release
-   - Tag: vX.Y.Z targeting the bump commit
-   - Write release notes following the template above
-   - Publish (not draft, not prerelease)
-8. [ ] Smoke test: `bunx tokscale@latest --version`
+6. [ ] Verify packages on npm: @softiq/tokscale-om and platform packages
+7. [ ] Verify GitHub Release exists for tag vX.Y.Z
+8. [ ] Smoke test: `npx -y @softiq/tokscale-om@latest --version`
 ```

@@ -130,7 +130,7 @@ One hourly bucket is uniquely identified by:
 
 ## Upload cadence
 
-- default schedule: **13:00 local time on weekdays**, configurable via `tokscale om configure`
+- default schedule: **13:00 local time on weekdays**, configurable via `tokscale-om om configure`
 - optional diagnostic mode: foreground daemon loop
 - every run:
   1. scan local sources incrementally

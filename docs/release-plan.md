@@ -10,7 +10,7 @@ The collector will be released as an internal tool with predictable install and 
 
 - internal GitHub repository
 - tagged releases
-- installable package distributed as an internal npm package and release archive
+- installable package distributed as the scoped npm package `@softiq/tokscale-om` and release archive
 
 ### Supported platforms in V1
 
@@ -24,7 +24,13 @@ The collector will be released as an internal tool with predictable install and 
 Primary install path:
 
 ```bash
-npm install -g @company/tokscale-om
+npm install -g @softiq/tokscale-om
+```
+
+Primary executable:
+
+```bash
+tokscale-om
 ```
 
 Fallback install path:
@@ -37,7 +43,7 @@ Fallback install path:
 V1 uses **manual controlled updates**:
 
 ```bash
-npm install -g @company/tokscale-om@<version>
+npm install -g @softiq/tokscale-om@<version>
 ```
 
 No auto-update agent is introduced in V1.
@@ -92,7 +98,7 @@ Default V1 runtime:
 
 - one local scheduled run per workday
 - default time: `13:00` in the user's local timezone
-- configurable through `tokscale om configure`
+- configurable through `tokscale-om om configure`
 - macOS uses `launchd`
 - Linux uses `systemd --user` timers
 - Windows remains manual in V1

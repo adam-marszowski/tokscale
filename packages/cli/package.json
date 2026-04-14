@@ -1,12 +1,11 @@
 {
-  "name": "@company/tokscale-om",
+  "name": "@softiq/tokscale-om",
   "version": "2.0.22",
-  "description": "A high-performance CLI tool and visualization dashboard for tracking AI coding assistant token usage and costs across multiple platforms.",
+  "description": "SoftIQ-maintained Open Mercato collector for privacy-safe AI coding usage aggregation.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "tokscale": "./bin.js",
     "tokscale-om": "./bin.js"
   },
   "files": [
@@ -19,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/junhoyeo/tokscale.git",
+    "url": "git+https://github.com/softiq/tokscale-om.git",
     "directory": "packages/cli"
   },
   "scripts": {
@@ -30,14 +29,14 @@
   },
   "dependencies": {},
   "optionalDependencies": {
-    "@company/tokscale-om-darwin-arm64": "2.0.22",
-    "@company/tokscale-om-darwin-x64": "2.0.22",
-    "@company/tokscale-om-linux-x64-gnu": "2.0.22",
-    "@company/tokscale-om-linux-x64-musl": "2.0.22",
-    "@company/tokscale-om-linux-arm64-gnu": "2.0.22",
-    "@company/tokscale-om-linux-arm64-musl": "2.0.22",
-    "@company/tokscale-om-win32-x64-msvc": "2.0.22",
-    "@company/tokscale-om-win32-arm64-msvc": "2.0.22"
+    "@softiq/tokscale-om-darwin-arm64": "2.0.22",
+    "@softiq/tokscale-om-darwin-x64": "2.0.22",
+    "@softiq/tokscale-om-linux-x64-gnu": "2.0.22",
+    "@softiq/tokscale-om-linux-x64-musl": "2.0.22",
+    "@softiq/tokscale-om-linux-arm64-gnu": "2.0.22",
+    "@softiq/tokscale-om-linux-arm64-musl": "2.0.22",
+    "@softiq/tokscale-om-win32-x64-msvc": "2.0.22",
+    "@softiq/tokscale-om-win32-arm64-msvc": "2.0.22"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

@@ -1,7 +1,8 @@
 {
   "name": "tokscale",
   "version": "2.0.22",
-  "description": "Alias for @company/tokscale-om — A high-performance CLI tool and visualization dashboard for tracking AI coding assistant token usage and costs across multiple platforms.",
+  "private": true,
+  "description": "Unpublished legacy alias for @softiq/tokscale-om.",
   "type": "module",
   "main": "index.js",
   "bin": {
@@ -11,12 +12,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/junhoyeo/tokscale.git"
+    "url": "git+https://github.com/softiq/tokscale-om.git"
   },
-  "bugs": {
-    "url": "https://github.com/junhoyeo/tokscale/issues"
-  },
-  "homepage": "https://github.com/junhoyeo/tokscale#readme",
   "keywords": [
     "token",
     "tracker",
@@ -28,11 +25,7 @@
     "cli"
   ],
   "dependencies": {
-    "@company/tokscale-om": "2.0.22"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
+    "@softiq/tokscale-om": "2.0.22"
   },
   "files": [
     "index.js",

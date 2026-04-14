@@ -58,10 +58,10 @@ This repository now includes an initial Open Mercato collector implementation fo
 
 - privacy-safe hourly bucket generation for Codex CLI and Claude Code,
 - local collector config and state under `~/.config/tokscale-om`,
-- manual collector commands: `tokscale om configure`, `tokscale om status`, `tokscale om sync`, and `tokscale om retry-blocked`,
-- optional foreground daemon mode via `tokscale om daemon`,
+- manual collector commands: `tokscale-om om configure`, `tokscale-om om status`, `tokscale-om om sync`, and `tokscale-om om retry-blocked`,
+- optional foreground daemon mode via `tokscale-om om daemon`,
 - per-user scheduled install/uninstall for `launchd` on macOS and `systemd --user` on Linux,
-- default daily local schedule at `13:00` on weekdays, configurable in `tokscale om configure`,
+- default daily local schedule at `13:00` on weekdays, configurable in `tokscale-om om configure`,
 - upload batching with deterministic sub-batches, local ack tracking, retry/backoff, and blocked-batch handling,
 - device token storage outside `config.json` with keyring-first storage and a secure local fallback,
 - ingest payloads aligned to the Open Mercato V1 collector contract at `/api/ai-usage/collector/v1/ingest`,

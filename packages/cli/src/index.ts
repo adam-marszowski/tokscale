@@ -5,13 +5,13 @@ import { resolve, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const binaryName = process.platform === "win32" ? "tokscale.exe" : "tokscale";
-const packageScope = "@company";
+const packageScope = "@softiq";
 
 const currentDir = fileURLToPath(new URL(".", import.meta.url));
 const dirName = basename(currentDir);
-// In npm install: currentDir = .../node_modules/@company/tokscale-om/dist/
-//   cliDir = .../node_modules/@company/tokscale-om/
-//   scopeDir = .../node_modules/@company/
+// In npm install: currentDir = .../node_modules/@softiq/tokscale-om/dist/
+//   cliDir = .../node_modules/@softiq/tokscale-om/
+//   scopeDir = .../node_modules/@softiq/
 // In monorepo dev (dist): currentDir = .../packages/cli/dist/
 //   cliDir = .../packages/cli/
 //   scopeDir = .../packages/
@@ -126,11 +126,11 @@ const searchPaths: string[] = [];
 
 if (targetPackage) {
   searchPaths.push(
-    // npm/bun install: sibling scoped package (node_modules/@company/tokscale-om-<platform>/bin/...)
+    // npm/bun install: sibling scoped package (node_modules/@softiq/tokscale-om-<platform>/bin/...)
     join(scopeDir, targetPackage, "bin", binaryName),
-    // Nested node_modules: non-hoisted / pnpm (node_modules/@company/tokscale-om/node_modules/@company/tokscale-om-<platform>/bin/...)
+    // Nested node_modules: non-hoisted / pnpm (node_modules/@softiq/tokscale-om/node_modules/@softiq/tokscale-om-<platform>/bin/...)
     join(cliDir, "node_modules", packageScope, targetPackage, "bin", binaryName),
-    // Hoisted edge case (node_modules/@company/node_modules/@company/tokscale-om-<platform>/bin/...)
+    // Hoisted edge case (node_modules/@softiq/node_modules/@softiq/tokscale-om-<platform>/bin/...)
     join(scopeDir, "node_modules", packageScope, targetPackage, "bin", binaryName),
     join(workspaceRoot, "node_modules", packageScope, targetPackage, "bin", binaryName),
     // Monorepo development
@@ -166,7 +166,7 @@ if (!binary) {
 }
 
 if (!binary) {
-  console.error("Error: tokscale binary not found");
+  console.error("Error: tokscale-om native binary not found");
   console.error("Build from source: cargo build --release -p tokscale-cli");
   if (targetPackage) {
     console.error(`Expected optional package: ${packageScope}/${targetPackage}`);

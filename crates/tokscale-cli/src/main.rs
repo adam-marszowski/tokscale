@@ -16,7 +16,7 @@ use std::time::Duration;
 use tui::Tab;
 
 #[derive(Parser)]
-#[command(name = "tokscale")]
+#[command(name = "tokscale-om")]
 #[command(author, version, about = "AI token usage analytics")]
 struct Cli {
     #[command(subcommand)]

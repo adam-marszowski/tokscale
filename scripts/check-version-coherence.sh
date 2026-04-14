@@ -45,35 +45,32 @@ def load_json(path: str) -> dict:
     return json.loads((root / path).read_text())
 
 cli_package = load_json("packages/cli/package.json")
-wrapper_package = load_json("packages/tokscale/package.json")
 cli_package_name = cli_package.get("name")
 if not cli_package_name:
     raise SystemExit("packages/cli/package.json is missing its package name")
 
+errors: list[str] = []
+
+if cli_package_name != "@softiq/tokscale-om":
+    errors.append(
+        f"packages/cli/package.json name: expected @softiq/tokscale-om, found {cli_package_name}"
+    )
+if set(cli_package.get("bin", {}).keys()) != {"tokscale-om"}:
+    errors.append("packages/cli/package.json should expose only the tokscale-om bin")
+if cli_package.get("publishConfig", {}).get("registry") != "https://registry.npmjs.org/":
+    errors.append("packages/cli/package.json publishConfig.registry should be https://registry.npmjs.org/")
+if cli_package.get("publishConfig", {}).get("access") != "public":
+    errors.append("packages/cli/package.json publishConfig.access should be public")
+
 platform_packages = sorted((root / "packages").glob("cli-*/package.json"))
 if not platform_packages:
     raise SystemExit("No platform package manifests found under packages/cli-*")
-
-errors: list[str] = []
 
 def expect_equal(label: str, actual: str, expected: str) -> None:
     if actual != expected:
         errors.append(f"{label}: expected {expected}, found {actual}")
 
 expect_equal("packages/cli/package.json version", cli_package["version"], workspace_version)
-expect_equal("packages/tokscale/package.json version", wrapper_package["version"], workspace_version)
-wrapper_dependencies = wrapper_package.get("dependencies", {})
-wrapper_cli_dependency = wrapper_dependencies.get(cli_package_name)
-if wrapper_cli_dependency is None:
-    errors.append(
-        f"packages/tokscale is missing dependency on {cli_package_name}"
-    )
-else:
-    expect_equal(
-        f"packages/tokscale dependency on {cli_package_name}",
-        wrapper_cli_dependency,
-        workspace_version,
-    )
 
 platform_names = set()
 for path in platform_packages:
@@ -82,8 +79,14 @@ for path in platform_packages:
     if not name:
         errors.append(f"{path} missing package name")
         continue
+    if not name.startswith("@softiq/tokscale-om-"):
+        errors.append(f"{path} package name should use @softiq/tokscale-om-* scope, found {name}")
     platform_names.add(name)
     expect_equal(f"{path} version", manifest["version"], workspace_version)
+    if manifest.get("publishConfig", {}).get("registry") != "https://registry.npmjs.org/":
+        errors.append(f"{path} publishConfig.registry should be https://registry.npmjs.org/")
+    if manifest.get("publishConfig", {}).get("access") != "public":
+        errors.append(f"{path} publishConfig.access should be public")
 
 expected_optional = platform_names
 actual_optional = set(cli_package["optionalDependencies"].keys())

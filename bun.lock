@@ -15,57 +15,57 @@
       "version": "0.1.0",
     },
     "packages/cli": {
-      "name": "@tokscale/cli",
-      "version": "1.4.3",
+      "name": "@softiq/tokscale-om",
+      "version": "2.0.22",
       "bin": {
-        "tokscale": "./dist/index.js",
+        "tokscale-om": "./bin.js",
       },
       "devDependencies": {
         "@types/node": "^20.0.0",
         "typescript": "^5.0.0",
       },
       "optionalDependencies": {
-        "@tokscale/cli-darwin-arm64": "1.4.3",
-        "@tokscale/cli-darwin-x64": "1.4.3",
-        "@tokscale/cli-linux-arm64-gnu": "1.4.3",
-        "@tokscale/cli-linux-arm64-musl": "1.4.3",
-        "@tokscale/cli-linux-x64-gnu": "1.4.3",
-        "@tokscale/cli-linux-x64-musl": "1.4.3",
-        "@tokscale/cli-win32-arm64-msvc": "1.4.3",
-        "@tokscale/cli-win32-x64-msvc": "1.4.3",
+        "@softiq/tokscale-om-darwin-arm64": "2.0.22",
+        "@softiq/tokscale-om-darwin-x64": "2.0.22",
+        "@softiq/tokscale-om-linux-arm64-gnu": "2.0.22",
+        "@softiq/tokscale-om-linux-arm64-musl": "2.0.22",
+        "@softiq/tokscale-om-linux-x64-gnu": "2.0.22",
+        "@softiq/tokscale-om-linux-x64-musl": "2.0.22",
+        "@softiq/tokscale-om-win32-arm64-msvc": "2.0.22",
+        "@softiq/tokscale-om-win32-x64-msvc": "2.0.22",
       },
     },
     "packages/cli-darwin-arm64": {
-      "name": "@tokscale/cli-darwin-arm64",
-      "version": "1.2.3",
+      "name": "@softiq/tokscale-om-darwin-arm64",
+      "version": "2.0.22",
     },
     "packages/cli-darwin-x64": {
-      "name": "@tokscale/cli-darwin-x64",
-      "version": "1.2.3",
+      "name": "@softiq/tokscale-om-darwin-x64",
+      "version": "2.0.22",
     },
     "packages/cli-linux-arm64-gnu": {
-      "name": "@tokscale/cli-linux-arm64-gnu",
-      "version": "1.2.3",
+      "name": "@softiq/tokscale-om-linux-arm64-gnu",
+      "version": "2.0.22",
     },
     "packages/cli-linux-arm64-musl": {
-      "name": "@tokscale/cli-linux-arm64-musl",
-      "version": "1.2.3",
+      "name": "@softiq/tokscale-om-linux-arm64-musl",
+      "version": "2.0.22",
     },
     "packages/cli-linux-x64-gnu": {
-      "name": "@tokscale/cli-linux-x64-gnu",
-      "version": "1.2.3",
+      "name": "@softiq/tokscale-om-linux-x64-gnu",
+      "version": "2.0.22",
     },
     "packages/cli-linux-x64-musl": {
-      "name": "@tokscale/cli-linux-x64-musl",
-      "version": "1.2.3",
+      "name": "@softiq/tokscale-om-linux-x64-musl",
+      "version": "2.0.22",
     },
     "packages/cli-win32-arm64-msvc": {
-      "name": "@tokscale/cli-win32-arm64-msvc",
-      "version": "1.2.3",
+      "name": "@softiq/tokscale-om-win32-arm64-msvc",
+      "version": "2.0.22",
     },
     "packages/cli-win32-x64-msvc": {
-      "name": "@tokscale/cli-win32-x64-msvc",
-      "version": "1.2.3",
+      "name": "@softiq/tokscale-om-win32-x64-msvc",
+      "version": "2.0.22",
     },
     "packages/frontend": {
       "name": "@tokscale/frontend",
@@ -104,12 +104,13 @@
     },
     "packages/tokscale": {
       "name": "tokscale",
-      "version": "1.4.3",
+      "version": "2.0.22",
       "bin": {
         "tokscale": "./bin.js",
+        "tokscale-om": "./bin.js",
       },
       "dependencies": {
-        "@tokscale/cli": "1.0.17",
+        "@softiq/tokscale-om": "2.0.22",
       },
     },
   },
@@ -468,23 +469,23 @@
 
     "@tokscale/benchmarks": ["@tokscale/benchmarks@workspace:packages/benchmarks"],
 
-    "@tokscale/cli": ["@tokscale/cli@workspace:packages/cli"],
+    "@softiq/tokscale-om": ["@softiq/tokscale-om@workspace:packages/cli"],
 
-    "@tokscale/cli-darwin-arm64": ["@tokscale/cli-darwin-arm64@workspace:packages/cli-darwin-arm64"],
+    "@softiq/tokscale-om-darwin-arm64": ["@softiq/tokscale-om-darwin-arm64@workspace:packages/cli-darwin-arm64"],
 
-    "@tokscale/cli-darwin-x64": ["@tokscale/cli-darwin-x64@workspace:packages/cli-darwin-x64"],
+    "@softiq/tokscale-om-darwin-x64": ["@softiq/tokscale-om-darwin-x64@workspace:packages/cli-darwin-x64"],
 
-    "@tokscale/cli-linux-arm64-gnu": ["@tokscale/cli-linux-arm64-gnu@workspace:packages/cli-linux-arm64-gnu"],
+    "@softiq/tokscale-om-linux-arm64-gnu": ["@softiq/tokscale-om-linux-arm64-gnu@workspace:packages/cli-linux-arm64-gnu"],
 
-    "@tokscale/cli-linux-arm64-musl": ["@tokscale/cli-linux-arm64-musl@workspace:packages/cli-linux-arm64-musl"],
+    "@softiq/tokscale-om-linux-arm64-musl": ["@softiq/tokscale-om-linux-arm64-musl@workspace:packages/cli-linux-arm64-musl"],
 
-    "@tokscale/cli-linux-x64-gnu": ["@tokscale/cli-linux-x64-gnu@workspace:packages/cli-linux-x64-gnu"],
+    "@softiq/tokscale-om-linux-x64-gnu": ["@softiq/tokscale-om-linux-x64-gnu@workspace:packages/cli-linux-x64-gnu"],
 
-    "@tokscale/cli-linux-x64-musl": ["@tokscale/cli-linux-x64-musl@workspace:packages/cli-linux-x64-musl"],
+    "@softiq/tokscale-om-linux-x64-musl": ["@softiq/tokscale-om-linux-x64-musl@workspace:packages/cli-linux-x64-musl"],
 
-    "@tokscale/cli-win32-arm64-msvc": ["@tokscale/cli-win32-arm64-msvc@workspace:packages/cli-win32-arm64-msvc"],
+    "@softiq/tokscale-om-win32-arm64-msvc": ["@softiq/tokscale-om-win32-arm64-msvc@workspace:packages/cli-win32-arm64-msvc"],
 
-    "@tokscale/cli-win32-x64-msvc": ["@tokscale/cli-win32-x64-msvc@workspace:packages/cli-win32-x64-msvc"],
+    "@softiq/tokscale-om-win32-x64-msvc": ["@softiq/tokscale-om-win32-x64-msvc@workspace:packages/cli-win32-x64-msvc"],
 
     "@tokscale/frontend": ["@tokscale/frontend@workspace:packages/frontend"],
 
